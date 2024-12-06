@@ -147,59 +147,77 @@ EOF
     rm -f temprikey tempubkey
 }
 add_multipleUser(){
-	#clear previous file for sftp
-	rm -rf /etc/wireguard/sftp/*
-	rmdir /etc/wireguard/sftp
-	mkdir /etc/wireguard/sftp
+        #clear previous file for sftp
+        rm -rf /etc/wireguard/sftp/*
+        rmdir /etc/wireguard/sftp
+        mkdir /etc/wireguard/sftp
 
-	echo -e "\033[37;41m给新用户起个名字，不能和已有用户重复（用分号;分隔多个用户名）\033[0m"
-	read -p "请输入用户名：" user_input
+        echo -e "\033[37;41m给新用户起个名字，不能和已有用户重复（用分号;分隔多个用户名）\033[0m"
+        read -p "请输入用户名：" user_input
 
-	# Split the input string by semicolons
-	IFS=';' read -r -a usernames <<< "$user_input"
-	cd /etc/wireguard/ || { echo "Failed to change directory to /etc/wireguard/"; exit 1; }
+        # Split the input string by semicolons
+        IFS=';' read -r -a usernames <<< "$user_input"
+        cd /etc/wireguard/ || { echo "Failed to change directory to /etc/wireguard/"; exit 1; }
 
-	# Loop through each username
-	for newname in "${usernames[@]}"; do
-	newname=$(echo "$newname" | xargs) # Remove any leading/trailing whitespace
-	newname="${newname}113"
-	if [ -z "$newname" ]; then
-		echo "用户名为空，跳过..."
-		continue
-	fi
-	if [ -f "$newname.conf" ]; then
-		echo "配置文件 $newname.conf 已存在，跳过..."
-		continue
-	fi
-	
-	local key_dir="/etc/wireguard/wireguard_keys"
-	mkdir -p "$key_dir"
-	wg genkey | tee "/etc/wireguard/wireguard_keys/${newname}_temprikey" | wg pubkey > "/etc/wireguard/wireguard_keys/${newname}_tempubkey"
-	
-	ipnum=$(grep Allowed /etc/wireguard/wg0.conf | tail -1 | awk -F '[ ./]' '{print $6}')
-	newnum=$((10#${ipnum}+1))
 
-	cp client.conf "$newname.conf"
-	sed -i 's%^PrivateKey.*$%'"PrivateKey = $(cat "/etc/wireguard/wireguard_keys/${newname}_temprikey")"'%' "$newname.conf"
-	sed -i 's%^Address.*$%'"Address = 10.77.77.$newnum\/32"'%' "$newname.conf"
+        ipnum=$(grep -oP 'AllowedIPs\s*=\s*\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' /etc/wireguard/wg0.conf | tail -1)
+        if [ -z "$ipnum" ]; then
+                ipnum="10.77.77.1"
+        fi
 
-	cat >> /etc/wireguard/wg0.conf <<-EOF
+        # Loop through each username
+        for newname in "${usernames[@]}"; do
+        newname=$(echo "$newname" | xargs) # Remove any leading/trailing whitespace
+        newname="${newname}113"
+        if [ -z "$newname" ]; then
+                echo "用户名为空，跳过..."
+                continue
+        fi
+        if [ -f "$newname.conf" ]; then
+                echo "配置文件 $newname.conf 已存在，跳过..."
+                continue
+        fi
+
+        local key_dir="/etc/wireguard/wireguard_keys"
+        mkdir -p "$key_dir"
+        wg genkey | tee "/etc/wireguard/wireguard_keys/${newname}_temprikey" | wg pubkey > "/etc/wireguard/wireguard_keys/${newname}_tempubkey"
+
+        subnet=$(echo $ipnum | awk -F'.' '{print $1 "." $2 "." $3}')
+        last_octet=$(echo $ipnum | awk -F'.' '{print $4}')
+
+        if ! [[ "$last_octet" =~ ^[0-9]+$ ]]; then
+                echo "Invalid IP address detected: $ipnum. Skipping user creation for $newname."
+                continue
+        fi
+
+        if [ "$last_octet" -eq 255 ]; then
+                subnet=$(echo $subnet | awk -F'.' '{print $1 "." $2 "." $3+1}')
+                ipnum="${subnet}.1"
+        else
+                    ipnum="${subnet}.$((last_octet + 1))"
+fi
+
+        cp client.conf "$newname.conf"
+        sed -i 's%^PrivateKey.*$%'"PrivateKey = $(cat "/etc/wireguard/wireguard_keys/${newname}_temprikey")"'%' "$newname.conf"
+        sed -i 's%^Address.*$%'"Address = $ipnum/32"'%' "$newname.conf"
+
+        cat >> /etc/wireguard/wg0.conf <<-EOF
 
 [Peer]
 PublicKey = $(cat "/etc/wireguard/wireguard_keys/${newname}_tempubkey")
-AllowedIPs = 10.77.77.$newnum/32
+AllowedIPs = $ipnum/32
 EOF
 
-	# Update WireGuard with new peer
-	wg set wg0 peer $(cat "/etc/wireguard/wireguard_keys/${newname}_tempubkey") allowed-ips 10.77.77.$newnum/32
-	echo -e "\033[37;41m添加完成，文件：/etc/wireguard/$newname.conf\033[0m"
+           # Update WireGuard with new peer
+        wg set wg0 peer $(cat "/etc/wireguard/wireguard_keys/${newname}_tempubkey") allowed-ips $ipnum/32
+        echo -e "\033[37;41m添加完成，文件：/etc/wireguard/$newname.conf\033[0m"
 
-	# Clean up temporary files
-	rm -rf /etc/wireguard/wireguard_keys/*
-	rmdir /etc/wireguard/wireguard_keys
+        # Clean up temporary files
+        rm -rf /etc/wireguard/wireguard_keys/*
+        rmdir /etc/wireguard/wireguard_keys
 
-	cp /etc/wireguard/"$newname".conf /etc/wireguard/sftp/"$newname".conf
-	done
+        cp /etc/wireguard/"$newname".conf /etc/wireguard/sftp/"$newname".conf
+        done
 }
 
 #开始菜单
