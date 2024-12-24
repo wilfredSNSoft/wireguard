@@ -221,6 +221,35 @@ EOF
         done
 }
 
+categorized(){
+    mkdir /etc/wireguard/cs
+    mkdir /etc/wireguard/dev
+    mkdir /etc/wireguard/others
+
+    clear
+    echo "1. CS"
+    echo "2. Dev"
+    echo "3. Others"
+    echo
+
+    read -p "Input Choices: " dept
+    case "$dept" in
+
+    1)
+        add_multipleUser
+        cp /etc/wireguard/sftp/* /etc/wireguard/cs
+    ;;
+    2)
+        add_multipleUser
+        cp /etc/wireguard/sftp/* /etc/wireguard/dev
+    ;;
+    3)
+        add_multipleUser
+        cp /etc/wireguard/sftp/* /etc/wireguard/others
+    ;;
+    esac
+}
+
 #开始菜单
 start_menu(){
     clear
@@ -259,7 +288,7 @@ start_menu(){
 	#add_user
 	#;;
 	2)
-	add_multipleUser
+	categorized
 	;;
 	0)
 	exit 1
