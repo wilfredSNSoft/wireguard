@@ -292,6 +292,7 @@ remove_user(){
         # If we have valid files, break out of the loop
         if [ ${#valid_files[@]} -gt 0 ]; then
             echo "Valid filenames: ${valid_files[@]}"
+            echo
             break  # Exit the loop if valid filenames were entered
         else
             echo "No valid files were entered. Please enter valid filenames."
@@ -303,10 +304,8 @@ remove_user(){
     config_file="/etc/wireguard/wg0.conf"
 
     # Create a backup of the wg0.conf file before making any changes
-    timestamp=$(date +'%Y%m%d%H%M')
+    timestamp=$(date +'%Y%m%d_%H_%M_%S')
     backup_file="$backup_directory_wg0/wg0.conf.backup.$timestamp"
-
-    echo "Creating a backup of $config_file at $backup_file..."
     cp "$config_file" "$backup_file"
     if [ $? -eq 0 ]; then
         echo "Backup of wg0.conf created successfully."
@@ -317,16 +316,17 @@ remove_user(){
 
     # Iterate over each valid file and process it
     for file in "${valid_files[@]}"; do
-        echo "Processing file: $file"
-        
+
         # Extract the IP address from the current file
         ip_address=$(extract_ip_from_file "$file")
         
         if [ -z "$ip_address" ]; then
             echo "No IP address found in the file: $file"
+            echo
             continue
         else
             echo "Found IP address: $ip_address in file $file"
+            echo
         fi
 
         # Extract only the filename from the full path to create a proper backup path
@@ -380,22 +380,25 @@ remove_user(){
             # Delete the file
             rm "$file"
             echo "Deleted the file: $file"
+            echo
         else
             echo "Skipped deletion of $file."
+            echo
         fi
     done
 
-    # Restart WireGuard to apply changes
-    if [ -x "/root/wireguardRestart.sh" ]; then
-        sh /root/wireguardRestart.sh
-        echo "
-    Restarting WireGuard service...
-    WireGuard service restarted successfully.
-    Script completed successfully.
-    "
-    else
-        echo "WireGuard restart script not found or not executable. Please restart WireGuard manually."
-    fi
+        # Restart WireGuard to apply changes
+        if [ -x "/root/wireguardRestart.sh" ]; then
+            # Run the script and hide standard output (but show errors)
+            sh /root/wireguardRestart.sh > /dev/null
+            if [ $? -eq 0 ]; then
+                echo "WireGuard service restarted successfully. Script completed successfully."
+            else
+                echo "Failed to restart WireGuard. Please check the script."
+            fi
+        else
+            echo "WireGuard restart script not found or not executable. Please restart WireGuard manually."
+        fi
 }
 
 #开始菜单
