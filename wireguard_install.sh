@@ -270,7 +270,7 @@ remove_user(){
 
     # Ask user for filenames (space-separated, e.g., e113)
     while true; do
-        read -p "Enter the filenames you want to delete (space-separated, e.g., e113 e114): " filenames
+        read -p "Enter the filenames you want to delete (space-separated, e.g., alex113 abc113): " filenames
         
         # Split the input into an array and check each file
         valid_files=()
@@ -278,15 +278,18 @@ remove_user(){
 
         for file in $filenames; do
             # Use find to search for the file recursively in the config_directory
-            full_file_path=$(find "$config_directory" -type f -name "$file.conf" 2>/dev/null)
-            
-            if [ -n "$full_file_path" ]; then
+            # This will handle multiple results correctly and return the full file paths
+            while IFS= read -r full_file_path; do
                 valid_files+=("$full_file_path")
-            else
+            done < <(find "$config_directory" -type f -name "$file.conf" 2>/dev/null)
+
+            # If no valid file is found, add it to invalid_files
+            if [ ${#valid_files[@]} -eq 0 ]; then
                 invalid_files+=("$file")
             fi
         done
 
+        # If we have valid files, break out of the loop
         if [ ${#valid_files[@]} -gt 0 ]; then
             echo "Valid filenames: ${valid_files[@]}"
             break  # Exit the loop if valid filenames were entered
@@ -294,6 +297,7 @@ remove_user(){
             echo "No valid files were entered. Please enter valid filenames."
         fi
     done
+
 
     # Define the path to the wg0 configuration file
     config_file="/etc/wireguard/wg0.conf"
