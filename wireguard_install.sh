@@ -268,17 +268,16 @@ remove_user(){
         echo "$ip_address"
     }
 
-    # Ask user for filenames (space-separated, e.g., e113)
+    # Ask user for filenames (space-separated, e.g., alex113)
     while true; do
         read -p "Enter the filenames you want to delete (space-separated, e.g., alex113 abc113): " filenames
-        
+
         # Split the input into an array and check each file
         valid_files=()
         invalid_files=()
 
         for file in $filenames; do
             # Use find to search for the file recursively in the config_directory
-            # This will handle multiple results correctly and return the full file paths
             while IFS= read -r full_file_path; do
                 valid_files+=("$full_file_path")
             done < <(find "$config_directory" -type f -name "$file.conf" 2>/dev/null)
@@ -292,13 +291,11 @@ remove_user(){
         # If we have valid files, break out of the loop
         if [ ${#valid_files[@]} -gt 0 ]; then
             echo "Valid filenames: ${valid_files[@]}"
-            echo
             break  # Exit the loop if valid filenames were entered
         else
             echo "No valid files were entered. Please enter valid filenames."
         fi
     done
-
 
     # Define the path to the wg0 configuration file
     config_file="/etc/wireguard/wg0.conf"
@@ -316,85 +313,69 @@ remove_user(){
 
     # Iterate over each valid file and process it
     for file in "${valid_files[@]}"; do
-
-        # Extract the IP address from the current file
         ip_address=$(extract_ip_from_file "$file")
         
         if [ -z "$ip_address" ]; then
             echo "No IP address found in the file: $file"
-            echo
             continue
         else
             echo "Found IP address: $ip_address in file $file"
-            echo
         fi
 
-        # Extract only the filename from the full path to create a proper backup path
-        filename=$(basename "$file")
-
         # Backup the user configuration file
+        filename=$(basename "$file")
         user_backup_file="$backup_directory_user/$filename.conf.backup.$timestamp"
         cp "$file" "$user_backup_file"
         
         if [ $? -eq 0 ]; then
             echo "Backup of $file created successfully."
-            echo
         else
             echo "Failed to create backup for $file"
-            echo
             exit 1
         fi
 
         # Search the wg0.conf file for the IP address and get the line number of the match
         line_num=$(grep -n "$ip_address" "$config_file" | cut -d: -f1)
-            
-            # Calculate the line range (2 lines above and the matching line)
+        
+        if [ -n "$line_num" ] && [ "$line_num" -gt 0 ]; then
             start_line=$((line_num - 2))
             end_line=$line_num
 
             # Prompt for user confirmation to delete the IP and its 2 preceding lines
             read -p "Are you sure you want to delete the IP address $ip_address and its 2 preceding lines from $config_file? (yes/no): " confirmation
             if [[ "$confirmation" =~ ^[Yy][Ee][Ss]$ ]]; then
-                # Create a temporary file to store the updated content
                 temp_file=$(mktemp)
-
-                # Use sed to delete the lines: 2 lines above and the line with the IP
                 sed "${start_line},${end_line}d" "$config_file" > "$temp_file"
-
-                # Replace the original file with the updated file
                 mv "$temp_file" "$config_file"
-
                 echo "Removed the IP address $ip_address and its 2 preceding lines from $config_file."
             else
                 echo "Operation canceled for $ip_address. No changes were made."
             fi
+        else
+            echo "No matching IP address found in wg0.conf."
         fi
 
         # Confirm file deletion
         read -p "Do you want to delete the configuration file $file? (yes/no): " delete_confirmation
         if [[ "$delete_confirmation" =~ ^[Yy][Ee][Ss]$ ]]; then
-            # Delete the file
             rm "$file"
             echo "Deleted the file: $file"
-            echo
         else
             echo "Skipped deletion of $file."
-            echo
         fi
     done
 
-        # Restart WireGuard to apply changes
-        if [ -x "/root/wireguardRestart.sh" ]; then
-            # Run the script and hide standard output (but show errors)
-            sh /root/wireguardRestart.sh > /dev/null
-            if [ $? -eq 0 ]; then
-                echo "WireGuard service restarted successfully. Script completed successfully."
-            else
-                echo "Failed to restart WireGuard. Please check the script."
-            fi
+    # Restart WireGuard to apply changes
+    if [ -x "/root/wireguardRestart.sh" ]; then
+        sh /root/wireguardRestart.sh > /dev/null
+        if [ $? -eq 0 ]; then
+            echo "WireGuard service restarted successfully. Script completed successfully."
         else
-            echo "WireGuard restart script not found or not executable. Please restart WireGuard manually."
+            echo "Failed to restart WireGuard. Please check the script."
         fi
+    else
+        echo "WireGuard restart script not found or not executable. Please restart WireGuard manually."
+    fi
 }
 
 #开始菜单
@@ -455,6 +436,5 @@ start_menu(){
 }
 
 start_menu
-
 
 
