@@ -251,14 +251,14 @@ start_menu(){
 	#4)
 	#wireguard_remove
 	#;;
-	5)
+	1)
 	content=$(cat /etc/wireguard/client.conf)
     	echo "${content}" | qrencode -o - -t UTF8
 	;;
 	#6)
 	#add_user
 	#;;
-	7)
+	2)
 	add_multipleUser
 	;;
 	0)
