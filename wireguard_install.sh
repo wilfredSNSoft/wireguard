@@ -153,7 +153,8 @@ add_multipleUser(){
         mkdir /etc/wireguard/sftp
 
         echo -e "\033[37;41m给新用户起个名字，不能和已有用户重复（用分号;分隔多个用户名）\033[0m"
-        read -p "请输入用户名：" user_input
+        echo -e "\033[37;41mNew created username cannot be repeated with existed confile file name (use ; to create multiple user, example, test;test1;test2) \033[0m"
+        read -p "请输入用户名 / Please input username：" user_input
 
         # Split the input string by semicolons
         IFS=';' read -r -a usernames <<< "$user_input"
@@ -208,7 +209,7 @@ PublicKey = $(cat "/etc/wireguard/wireguard_keys/${newname}_tempubkey")
 AllowedIPs = $ipnum/32
 EOF
 
-           # Update WireGuard with new peer
+        # Update WireGuard with new peer
         wg set wg0 peer $(cat "/etc/wireguard/wireguard_keys/${newname}_tempubkey") allowed-ips $ipnum/32
         echo -e "\033[37;41m添加完成，文件：/etc/wireguard/$newname.conf\033[0m"
 
@@ -227,36 +228,36 @@ start_menu(){
     echo " 介绍：适用于CentOS7"
     echo " 作者：A"
     echo "========================="
-    echo "1. 升级系统内核"
-    echo "2. 安装wireguard"
-    echo "3. 升级wireguard"
-    echo "4. 卸载wireguard"
-    echo "5. 显示客户端二维码"
-    echo "6. 增加用户"
-    echo "7. 增加多用户（测试） "
+    #echo "1. 升级系统内核"
+    #echo "2. 安装wireguard"
+    #echo "3. 升级wireguard"
+    #echo "4. 卸载wireguard"
+    echo "1. 显示客户端二维码 / Generate QR code (Incomplete)"
+    #echo "6. 增加用户"
+    echo "2. 增加多用户 / Create User "
     echo "0. 退出脚本"
     echo
-    read -p "请输入数字:" num
+    read -p "请输入数字 / Input choices:" num
     case "$num" in
-    	1)
-	update_kernel
-	;;
-	2)
-	wireguard_install
-	;;
-	3)
-	wireguard_update
-	;;
-	4)
-	wireguard_remove
-	;;
+    #1)
+	#update_kernel
+	#;;
+	#2)
+	#wireguard_install
+	#;;
+	#3)
+	#wireguard_update
+	#;;
+	#4)
+	#wireguard_remove
+	#;;
 	5)
 	content=$(cat /etc/wireguard/client.conf)
     	echo "${content}" | qrencode -o - -t UTF8
 	;;
-	6)
-	add_user
-	;;
+	#6)
+	#add_user
+	#;;
 	7)
 	add_multipleUser
 	;;
@@ -266,7 +267,8 @@ start_menu(){
 	*)
 	clear
 	echo "请输入正确数字"
-	sleep 5s
+    echo "Please Enter a valid number"
+	sleep 2s
 	start_menu
 	;;
     esac
