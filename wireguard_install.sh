@@ -334,23 +334,19 @@ remove_user(){
 
         # Backup the user configuration file
         user_backup_file="$backup_directory_user/$filename.conf.backup.$timestamp"
-        echo "Creating a backup of $file at $user_backup_file..."
         cp "$file" "$user_backup_file"
         
         if [ $? -eq 0 ]; then
             echo "Backup of $file created successfully."
+            echo
         else
             echo "Failed to create backup for $file"
+            echo
             exit 1
         fi
 
         # Search the wg0.conf file for the IP address and get the line number of the match
         line_num=$(grep -n "$ip_address" "$config_file" | cut -d: -f1)
-
-        if [ -z "$line_num" ]; then
-            echo "No matching entry found for IP address: $ip_address"
-        else
-            echo "Matching entry found at line number: $line_num"
             
             # Calculate the line range (2 lines above and the matching line)
             start_line=$((line_num - 2))
