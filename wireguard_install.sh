@@ -268,7 +268,7 @@ start_menu(){
 	clear
 	echo "请输入正确数字"
     echo "Please Enter a valid number"
-	sleep 2s
+	sleep 1s
 	start_menu
 	;;
     esac
