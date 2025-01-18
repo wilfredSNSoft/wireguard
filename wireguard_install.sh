@@ -230,7 +230,8 @@ EOF
             shopt -s extglob
 
             # The globbing pattern to remove unwanted files
-            rm -fv !(sprivatekey|spublickey|others|sftp|dev|cs|backups|cprivatekey|cpublickey|client.conf|wg0.conf)
+            ls /etc/wireguard/ | grep -vE '^(sprivatekey|spublickey|others|sftp|dev|cs|backups|cprivatekey|cpublickey|client.conf|wg0.conf)$' | xargs -I {} rm -fv /etc/wireguard/{}
+
         )
     done
 }
