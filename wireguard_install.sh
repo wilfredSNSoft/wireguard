@@ -158,8 +158,8 @@ add_multipleUser(){
 
         # Split the input string by semicolons
         IFS=';' read -r -a usernames <<< "$user_input"
-        cd /etc/wireguard/ || { echo "Failed to change directory to /etc/wireguard/"; exit 1; }
 
+        cd /etc/wireguard/ || { echo "Failed to change directory to /etc/wireguard/"; exit 1; }
 
         ipnum=$(grep -oP 'AllowedIPs\s*=\s*\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' /etc/wireguard/wg0.conf | tail -1)
         if [ -z "$ipnum" ]; then
@@ -218,6 +218,11 @@ EOF
         rmdir /etc/wireguard/wireguard_keys
 
         cp /etc/wireguard/"$newname".conf /etc/wireguard/sftp/"$newname".conf
+
+        #clearing config file in global
+        shopt -s extglob
+        rm -fv !(sprivatekey|spublickey|others|sftp|dev|cs|backups|cprivatekey|cpublickey|client.conf|wg0.conf)
+
         done
 }
 
