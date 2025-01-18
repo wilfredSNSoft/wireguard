@@ -219,6 +219,7 @@ EOF
 
         cp /etc/wireguard/"$newname".conf /etc/wireguard/sftp/"$newname".conf
 
+        set -H
         shopt -s extglob
         rm -fv !(sprivatekey|spublickey|others|sftp|dev|cs|backups|cprivatekey|cpublickey|client.conf|wg0.conf)
 
