@@ -225,14 +225,14 @@ EOF
         cp /etc/wireguard/"$newname".conf /etc/wireguard/sftp/"$newname".conf
 
         # Run rm command with extended globbing in a subshell to ensure proper interpretation of the pattern
-        (
+        #(
             # Enable extglob in the subshell, just in case
-            shopt -s extglob
+            #shopt -s extglob
 
             # The globbing pattern to remove unwanted files
-            ls /etc/wireguard/ | grep -vE '^(sprivatekey|spublickey|others|sftp|dev|cs|backups|cprivatekey|cpublickey|client.conf|wg0.conf)$' | xargs -I {} rm -fv /etc/wireguard/{}
+            #ls /etc/wireguard/ | grep -vE '^(sprivatekey|spublickey|others|sftp|dev|cs|backups|cprivatekey|cpublickey|client.conf|wg0.conf)$' | xargs -I {} rm -fv /etc/wireguard/{}
 
-        )
+       #)
     done
 }
 
@@ -453,7 +453,7 @@ start_menu(){
 	#add_user
 	#;;
 	2)
-	categorized
+	add_multipleUser
 	;;
     3)
     remove_user
