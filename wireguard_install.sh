@@ -224,46 +224,7 @@ EOF
 
         cp /etc/wireguard/"$newname".conf /etc/wireguard/sftp/"$newname".conf
 
-        # Run rm command with extended globbing in a subshell to ensure proper interpretation of the pattern
-        #(
-            # Enable extglob in the subshell, just in case
-            #shopt -s extglob
-
-            # The globbing pattern to remove unwanted files
-            #ls /etc/wireguard/ | grep -vE '^(sprivatekey|spublickey|others|sftp|dev|cs|backups|cprivatekey|cpublickey|client.conf|wg0.conf)$' | xargs -I {} rm -fv /etc/wireguard/{}
-
-       #)
     done
-}
-
-
-categorized(){
-    mkdir /etc/wireguard/cs
-    mkdir /etc/wireguard/dev
-    mkdir /etc/wireguard/others
-
-    clear
-    echo "1. CS"
-    echo "2. Dev"
-    echo "3. Others"
-    echo
-
-    read -p "Input Choices: " dept
-    case "$dept" in
-
-    1)
-        add_multipleUser
-        cp /etc/wireguard/sftp/* /etc/wireguard/cs
-    ;;
-    2)
-        add_multipleUser
-        cp /etc/wireguard/sftp/* /etc/wireguard/dev
-    ;;
-    3)
-        add_multipleUser
-        cp /etc/wireguard/sftp/* /etc/wireguard/others
-    ;;
-    esac
 }
 
 remove_user(){
@@ -421,37 +382,17 @@ start_menu(){
     echo " 介绍：适用于CentOS7"
     echo " 作者：A"
     echo "========================="
-    #echo "1. 升级系统内核"
-    #echo "2. 安装wireguard"
-    #echo "3. 升级wireguard"
-    #echo "4. 卸载wireguard"
     echo "1. 显示客户端二维码 / Generate QR code (Incomplete)"
-    #echo "6. 增加用户"
     echo "2. 增加多用户 / Create User "
     echo "3. 删除用户 / Delete User "
     echo "0. 退出脚本"
     echo
     read -p "请输入数字 / Input choices:" num
     case "$num" in
-    #1)
-	#update_kernel
-	#;;
-	#2)
-	#wireguard_install
-	#;;
-	#3)
-	#wireguard_update
-	#;;
-	#4)
-	#wireguard_remove
-	#;;
 	1)
 	content=$(cat /etc/wireguard/client.conf)
     	echo "${content}" | qrencode -o - -t UTF8
 	;;
-	#6)
-	#add_user
-	#;;
 	2)
 	add_multipleUser
 	;;
